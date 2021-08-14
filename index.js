@@ -193,6 +193,24 @@ app.get('/follow/count/:id', (req, res) => {
   })
 })
 
+app.get('/comments/:project_id', (req, res) => {
+  const { project_id } = req.params;
+
+  connection.query(`SELECT * FROM comments INNER JOIN accounts on accounts.account_id = comments.account_id WHERE project_id = ${project_id}`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
+app.post('/comment', (req, res) => {
+  const { account_id, project_id, body } = req.body;
+
+  connection.query(`insert into comments (body, account_id, project_id) values ('${body}', '${account_id}', '${project_id}')`, (err, rows, fields) => {
+    if(err) throw err
+    res.sendStatus(201);
+  })
+})
+
 // app.get('/accounts', (req, res) => {
 //   connection.query('SELECT * FROM accounts', (err, rows, fields) => {
 //     if(err) throw err
