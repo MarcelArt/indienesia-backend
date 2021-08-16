@@ -207,7 +207,40 @@ app.post('/comment', (req, res) => {
 
   connection.query(`insert into comments (body, account_id, project_id) values ('${body}', '${account_id}', '${project_id}')`, (err, rows, fields) => {
     if(err) throw err
-    res.sendStatus(201);
+    res.send({success: true, status: 201});
+  })
+})
+
+app.post('/stats/view', (req, res) => {
+  const { project_id } = req.body;
+
+  connection.query(`insert into views (project_id) values (${project_id})`, (err, rows, fields) => {
+    if(err) throw err
+    res.send({success: true, status: 201});
+  })
+})
+
+app.get('/stats/views/:id', (req, res) => {
+  const { id } = req.params;
+  connection.query(`SELECT COUNT(project_id) as views, view_date FROM views WHERE project_id=${ id } GROUP BY date(view_date)`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+app.post('/stats/download', (req, res) => {
+  const { project_id } = req.body;
+
+  connection.query(`insert into downloads (project_id) values (${project_id})`, (err, rows, fields) => {
+    if(err) throw err
+    res.send({success: true, status: 201});
+  })
+})
+
+app.get('/stats/downloads/:id', (req, res) => {
+  const { id } = req.params;
+  connection.query(`SELECT COUNT(project_id) as downloads, download_date FROM downloads WHERE project_id=${ id } GROUP BY date(download_date)`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
   })
 })
 
