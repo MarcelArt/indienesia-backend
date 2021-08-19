@@ -4,7 +4,9 @@ var cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const e = require('express');
+// let router = express.Router();
+
+const accountsRoute = require('./router/accountsRoute');
 
 const app = express();
 const port = 3000;
@@ -28,7 +30,6 @@ let storage = multer.diskStorage({
   filename: function(req, file, cb) {
     let fName = file.originalname.split('.');
     let ext = fName.pop();
-    // console.log(file.originalname);
     cb(null, Date.now() + '.' + ext);
   }
 })
@@ -62,11 +63,62 @@ app.post('/login', (req, res) => {
   })
 });
 
+app.post('/accounts', upload.single('avatar'), (req, res) => {
+  const { account_id, new_password, new_name } = req.body;
+  const { destination, filename } = req.file;
+  connection.query(`UPDATE accounts SET name = '${new_name}', avatar = '${ destination + filename }' WHERE account_id = ${account_id}`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
+app.post('/accounts/changePassword', (req, res) => {
+  const { new_password, account_id } = req.body;
+  
+  connection.query(`update accounts set password = '${new_password}' where account_id = ${ account_id }`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
+app.post('/accounts/getPassword', (req, res) => {
+  const { account_id } = req.body;
+  connection.query(`select password from accounts where account_id = ${ account_id }`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows[0]);
+  })
+})
+
 app.get('/accounts/:id', (req, res) => {
   connection.query(`select * from accounts where account_id = ${req.params.id}`, (err, rows, fields) => {
     res.send(rows);
   })
 })
+
+app.get('/accounts/avatar/:account_id', (req, res) => {
+  const { account_id } = req.params;
+  connection.query(`select avatar from accounts where account_id = ${ account_id }`, (err, rows, fields) => {
+    let fileUrl = rows[0].avatar;
+    if(fileUrl) {
+      let [, , fileName] = fileUrl.split('/');
+      res.download(fileUrl, fileName, e => {
+        if(e) {
+          res.sendStatus(404);
+        }
+        else {
+          console.log('Sent:', fileName);
+        }
+      });
+    }
+    else {
+      res.sendStatus(404);
+    }
+    
+  })
+})
+
+
+// app.use('/accounts', accountsRoute);
 
 app.get('/projects/all', (req, res) => { // all projects
   connection.query('select * from projects', (err, rows, fields) => {
