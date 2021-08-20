@@ -183,11 +183,29 @@ app.post('/projects/post', upload.array('project_file[]'), (req, res) => {
   })
 })
 
+app.post('/projects/edit', upload.single('project_file'), (req, res) => {
+  const { title, description, visibility, project_id } = req.body;
+  if(req.file) {
+    const { destination, filename } = req.file;
+    connection.query(`update projects set title = '${ title }', description = '${ description }', visibility = '${ visibility }', project_file = '${ destination + filename }' where project_id = ${ project_id }`, (err, rows, fields) => {
+      if(err) throw err 
+      res.send(rows);
+    })
+  }
+  else {
+    connection.query(`update projects set title = '${ title }', description = '${ description }', visibility = '${ visibility }' where project_id = ${ project_id }`, (err, rows, fields) => {
+      if(err) throw err 
+      res.send(rows);
+    })
+  }
+})
+
 app.get('/screenshot/:id', (req, res) => {
   connection.query(`select * from screenshots where screenshot_id = ${req.params.id}`, (err, rows, fields) => {
     let fileUrl = rows[0].image_file;
     let [, , fileName] = fileUrl.split('/');
     console.log(`fileName`, fileName);
+    
     
     res.download(fileUrl, fileName, e => {
       if(e) {
@@ -291,6 +309,38 @@ app.post('/stats/download', (req, res) => {
 app.get('/stats/downloads/:id', (req, res) => {
   const { id } = req.params;
   connection.query(`SELECT COUNT(project_id) as downloads, download_date FROM downloads WHERE project_id=${ id } GROUP BY date(download_date)`, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
+app.post('/likes', (req, res) => {
+  const { project_id, account_id } = req.body;
+  let query = `SELECT count(project_id) as like_count, 
+    EXISTS(SELECT account_id from likes where account_id = ${ account_id }) as liked 
+    FROM likes WHERE project_id = ${ project_id }`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    const { like_count } = rows[0];
+    const liked = rows[0].liked ? true : false;
+    let results = { like_count, liked };
+    res.send(results);;
+  })
+})
+
+app.post('/like', (req, res) => {
+  const { project_id, account_id } = req.body;
+  let query = `insert into likes(project_id, account_id) values (${ project_id }, ${ account_id })`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
+app.post('/unlike', (req, res) => {
+  const { account_id } = req.body;
+  let query = `delete from likes where account_id = ${ account_id }`;
+  connection.query(query, (err, rows, fields) => {
     if(err) throw err
     res.send(rows);
   })
