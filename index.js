@@ -7,6 +7,7 @@ const path = require('path');
 // let router = express.Router();
 
 const accountsRoute = require('./router/accountsRoute');
+const { query } = require('express');
 
 const app = express();
 const port = 3000;
@@ -41,6 +42,12 @@ connection.connect();
 app.get('/', (req, res) => {
   res.send('Hello world');
 });
+
+app.get('/public/uploads/:url', (req, res) => {
+  const { url } = req.params;
+  console.log(`url`, url);
+  res.sendFile(path.join(__dirname, 'public/uploads/', url));
+})
 
 app.post('/register', (req, res) => {
   const {email, password, name} = req.body;
@@ -121,7 +128,54 @@ app.get('/accounts/avatar/:account_id', (req, res) => {
 // app.use('/accounts', accountsRoute);
 
 app.get('/projects/all', (req, res) => { // all projects
-  connection.query('select * from projects', (err, rows, fields) => {
+  let query = `select * from projects
+    left join (
+        select count(project_id) as like_count, project_id
+        from likes
+        GROUP by project_id
+    ) as like_table
+    on like_table.project_id = projects.project_id 
+    left join (
+        select count(project_id) as download_count, project_id
+        from downloads
+        GROUP BY project_id
+    ) as download_table
+    on download_table.project_id = projects.project_id
+    left join (
+        select count(project_id) as view_count, project_id
+        from views
+        GROUP BY project_id
+    ) as view_table
+    on view_table.project_id = projects.project_id`;
+  connection.query(query, (err, rows, fields) => {
+    res.send(rows);
+  });
+})
+
+app.get('/projects/search/:keyword', (req, res) => {
+  const { keyword } = req.params;
+  let query = `select * from projects
+    left join (
+        select count(project_id) as like_count, project_id
+        from likes
+        GROUP by project_id
+    ) as like_table
+    on like_table.project_id = projects.project_id 
+    left join (
+        select count(project_id) as download_count, project_id
+        from downloads
+        GROUP BY project_id
+    ) as download_table
+    on download_table.project_id = projects.project_id
+    left join (
+        select count(project_id) as view_count, project_id
+        from views
+        GROUP BY project_id
+    ) as view_table
+    on view_table.project_id = projects.project_id
+    where title like '%${ keyword }%'`;
+  connection.query(query, (err, rows, fields) => {
+    console.log(rows);
     res.send(rows);
   });
 })
@@ -159,7 +213,28 @@ app.get('/projects/:id/download', (req, res) => {
 
 
 app.get('/projects/user/:id', (req, res) => { // get all projects from user
-  connection.query(`select * from projects where account_id = ${req.params.id}`, (err, rows, fields) => {
+  let query = `select * from projects
+    left join (
+        select count(project_id) as like_count, project_id
+        from likes
+        GROUP by project_id
+    ) as like_table
+    on like_table.project_id = projects.project_id 
+    left join (
+        select count(project_id) as download_count, project_id
+        from downloads
+        GROUP BY project_id
+    ) as download_table
+    on download_table.project_id = projects.project_id
+    left join (
+        select count(project_id) as view_count, project_id
+        from views
+        GROUP BY project_id
+    ) as view_table
+    on view_table.project_id = projects.project_id
+    where account_id = ${req.params.id}`;
+  let oldQuery = `select * from projects where account_id = ${req.params.id}`;
+  connection.query(query, (err, rows, fields) => {
     res.send(rows);
   })
 })

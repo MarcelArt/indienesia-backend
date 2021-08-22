@@ -1,0 +1,20 @@
+# sort by like
+select * from projects
+left join (
+    select count(project_id) as like_count, project_id
+    from likes
+    GROUP by project_id
+) as like_table
+on like_table.project_id = projects.project_id 
+left join (
+    select count(project_id) as download_count, project_id
+    from downloads
+    GROUP BY project_id
+) as download_table
+on download_table.project_id = projects.project_id
+left join (
+    select count(project_id) as view_count, project_id
+    from views
+    GROUP BY project_id
+) as view_table
+on view_table.project_id = projects.project_id
