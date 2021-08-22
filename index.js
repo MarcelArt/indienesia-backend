@@ -392,11 +392,12 @@ app.get('/stats/downloads/:id', (req, res) => {
 app.post('/likes', (req, res) => {
   const { project_id, account_id } = req.body;
   let query = `SELECT count(project_id) as like_count, 
-    EXISTS(SELECT account_id from likes where account_id = ${ account_id }) as liked 
+    EXISTS(SELECT account_id from likes where account_id = ${ account_id } and project_id = ${ project_id }) as liked 
     FROM likes WHERE project_id = ${ project_id }`;
   connection.query(query, (err, rows, fields) => {
     if(err) throw err
     const { like_count } = rows[0];
+    console.log(rows[0]);
     const liked = rows[0].liked ? true : false;
     let results = { like_count, liked };
     res.send(results);;
