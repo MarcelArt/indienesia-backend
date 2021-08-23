@@ -275,6 +275,29 @@ app.post('/projects/edit', upload.single('project_file'), (req, res) => {
   }
 })
 
+app.post('/screenshot', upload.single('image_file'), (req, res) => {
+  const { project_id } = req.body;
+  const { destination, filename } = req.file;
+  let query = `insert screenshots (image_file, project_id) values ('${ destination + filename }', ${ project_id })`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    // res.send({
+    //   success: true,
+    //   message: 'Screenshot added',
+    //   rows
+    // });
+    query = `select * from screenshots where screenshot_id = ${ rows.insertId }`;
+    connection.query(query, (e, r, f) => {
+      if(e) throw e
+      res.send({
+        success: true,
+        message: 'Screenshot added',
+        new_screenshot: r[0]
+      });
+    })
+  })
+})
+
 app.get('/screenshot/:id', (req, res) => {
   connection.query(`select * from screenshots where screenshot_id = ${req.params.id}`, (err, rows, fields) => {
     let fileUrl = rows[0].image_file;
@@ -299,6 +322,20 @@ app.get('/screenshot/:id', (req, res) => {
     //     console.log('Sent:', fileUrl);
     //   }
     // })
+  })
+})
+
+
+app.post('/screenshot/delete', (req, res) => {
+  const { screenshot_id } = req.body;
+  let query = `DELETE FROM screenshots WHERE screenshot_id = ${ screenshot_id }`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    res.send({
+      success: true,
+      message: 'Screesnhot deleted',
+      rows
+    });
   })
 })
 
