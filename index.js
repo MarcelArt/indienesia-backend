@@ -128,25 +128,26 @@ app.get('/accounts/avatar/:account_id', (req, res) => {
 // app.use('/accounts', accountsRoute);
 
 app.get('/projects/all', (req, res) => { // all projects
-  let query = `select * from projects
-    left join (
-        select count(project_id) as like_count, project_id
-        from likes
-        GROUP by project_id
-    ) as like_table
-    on like_table.project_id = projects.project_id 
-    left join (
-        select count(project_id) as download_count, project_id
-        from downloads
-        GROUP BY project_id
-    ) as download_table
-    on download_table.project_id = projects.project_id
-    left join (
-        select count(project_id) as view_count, project_id
-        from views
-        GROUP BY project_id
-    ) as view_table
-    on view_table.project_id = projects.project_id`;
+  let query = `select  projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count 
+    from projects
+      left join (
+          select count(project_id) as like_count, project_id
+          from likes
+          GROUP by project_id
+      ) as like_table
+      on like_table.project_id = projects.project_id 
+      left join (
+          select count(project_id) as download_count, project_id
+          from downloads
+          GROUP BY project_id
+      ) as download_table
+      on download_table.project_id = projects.project_id
+      left join (
+          select count(project_id) as view_count, project_id
+          from views
+          GROUP BY project_id
+      ) as view_table
+      on view_table.project_id = projects.project_id`;
   connection.query(query, (err, rows, fields) => {
     res.send(rows);
   });
@@ -154,7 +155,7 @@ app.get('/projects/all', (req, res) => { // all projects
 
 app.get('/projects/search/:keyword', (req, res) => {
   const { keyword } = req.params;
-  let query = `select * from projects
+  let query = `select select  projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count from projects
     left join (
         select count(project_id) as like_count, project_id
         from likes
@@ -456,6 +457,19 @@ app.post('/unlike', (req, res) => {
   connection.query(query, (err, rows, fields) => {
     if(err) throw err
     res.send(rows);
+  })
+})
+
+app.post('/donate', (req, res) => {
+  const { project_id, amount } = req.body;
+  let query = `insert into donations (amount, project_id) values (${ amount }, ${ project_id })`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    res.send({
+      success: true,
+      message: 'Donated',
+      rows
+    })
   })
 })
 
