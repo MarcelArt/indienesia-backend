@@ -128,7 +128,7 @@ app.get('/accounts/avatar/:account_id', (req, res) => {
 // app.use('/accounts', accountsRoute);
 
 app.get('/projects/all', (req, res) => { // all projects
-  let query = `select  projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count 
+  let query = `select projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count 
     from projects
       left join (
           select count(project_id) as like_count, project_id
@@ -147,7 +147,8 @@ app.get('/projects/all', (req, res) => { // all projects
           from views
           GROUP BY project_id
       ) as view_table
-      on view_table.project_id = projects.project_id`;
+      on view_table.project_id = projects.project_id
+      where visibility='Public'`;
   connection.query(query, (err, rows, fields) => {
     res.send(rows);
   });
@@ -155,7 +156,7 @@ app.get('/projects/all', (req, res) => { // all projects
 
 app.get('/projects/search/:keyword', (req, res) => {
   const { keyword } = req.params;
-  let query = `select select  projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count from projects
+  let query = `select projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count from projects
     left join (
         select count(project_id) as like_count, project_id
         from likes
@@ -213,8 +214,9 @@ app.get('/projects/:id/download', (req, res) => {
 
 
 
-app.get('/projects/user/:id', (req, res) => { // get all projects from user
-  let query = `select * from projects
+app.post('/projects/user/:id', (req, res) => { // get all projects from user
+  const { all } = req.body;
+  let query = `select projects.project_id, title, description, visibility, project_file, account_id, like_count, download_count, view_count from projects
     left join (
         select count(project_id) as like_count, project_id
         from likes
@@ -234,6 +236,11 @@ app.get('/projects/user/:id', (req, res) => { // get all projects from user
     ) as view_table
     on view_table.project_id = projects.project_id
     where account_id = ${req.params.id}`;
+
+  if(!all) {
+    query = query +  ` and visibility='Public'`
+  }
+  
   let oldQuery = `select * from projects where account_id = ${req.params.id}`;
   connection.query(query, (err, rows, fields) => {
     res.send(rows);
