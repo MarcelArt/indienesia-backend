@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql');
 var cors = require('cors');
@@ -19,10 +20,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'tugas-akhir'
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DATABASE
 });
 
 let storage = multer.diskStorage({
