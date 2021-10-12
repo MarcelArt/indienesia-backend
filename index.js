@@ -4,6 +4,7 @@ var cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+
 // let router = express.Router();
 
 const accountsRoute = require('./router/accountsRoute');
@@ -45,7 +46,6 @@ app.get('/', (req, res) => {
 
 app.get('/public/uploads/:url', (req, res) => {
   const { url } = req.params;
-  console.log(`url`, url);
   res.sendFile(path.join(__dirname, 'public/uploads/', url));
 })
 
@@ -177,7 +177,6 @@ app.get('/projects/search/:keyword', (req, res) => {
     on view_table.project_id = projects.project_id
     where title like '%${ keyword }%'`;
   connection.query(query, (err, rows, fields) => {
-    console.log(rows);
     res.send(rows);
   });
 })
@@ -310,7 +309,6 @@ app.get('/screenshot/:id', (req, res) => {
   connection.query(`select * from screenshots where screenshot_id = ${req.params.id}`, (err, rows, fields) => {
     let fileUrl = rows[0].image_file;
     let [, , fileName] = fileUrl.split('/');
-    console.log(`fileName`, fileName);
     
     
     res.download(fileUrl, fileName, e => {
@@ -349,7 +347,6 @@ app.post('/screenshot/delete', (req, res) => {
 
 app.post('/follow', (req, res) => {
   const { account_id, following_id } = req.body;
-  console.log('body', req.body);
   connection.query(`insert into followers (account_id, following_id) values ('${account_id}', '${following_id}')`, (err, rows, fields) => {
     if(err) throw err
     res.send(rows);
@@ -367,7 +364,6 @@ app.post('/unfollow', (req, res) => {
 
 app.post('/follow/status', (req, res) => {
   const { account_id, following_id } = req.body;
-  console.log('body', req.body);
   connection.query(`select * from followers where account_id=${account_id} and following_id=${following_id}`, (err, rows, fields) => {
     if(err) throw err
     const followed = rows.length > 0;
@@ -442,7 +438,6 @@ app.post('/likes', (req, res) => {
   connection.query(query, (err, rows, fields) => {
     if(err) throw err
     const { like_count } = rows[0];
-    console.log(rows[0]);
     const liked = rows[0].liked ? true : false;
     let results = { like_count, liked };
     res.send(results);;
