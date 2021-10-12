@@ -12,7 +12,7 @@ const accountsRoute = require('./router/accountsRoute');
 const { query } = require('express');
 
 const app = express();
-const port = 3000;
+// const port = 3000;
 // const upload = multer({ dest: './public/data/uploads/'});
 
 app.use(express.json());
@@ -486,5 +486,5 @@ app.post('/donate', (req, res) => {
 
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Example app listening at http://localhost:${process.env.PORT}`);
 });
