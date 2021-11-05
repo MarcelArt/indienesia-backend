@@ -442,7 +442,30 @@ app.post('/likes', (req, res) => {
     const { like_count } = rows[0];
     const liked = rows[0].liked ? true : false;
     let results = { like_count, liked };
-    res.send(results);;
+    res.send(results);
+  })
+})
+
+app.post('/dislikes', (req, res) => {
+  const { project_id, account_id } = req.body;
+  let query = `SELECT count(project_id) as dislike_count, 
+    EXISTS(SELECT account_id from dislikes where account_id = ${ account_id } and project_id = ${ project_id }) as disliked 
+    FROM dislikes WHERE project_id = ${ project_id }`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    const { dislike_count } = rows[0];
+    const disliked = rows[0].disliked ? true : false;
+    let results = { dislike_count, disliked };
+    res.send(results);
+  })
+})
+
+app.get('/views/:project_id', (req, res) => {
+  const { project_id } = req.params;
+  let query = `SELECT count(project_id) as view_count FROM views where project_id = ${ project_id }`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows[0]);
   })
 })
 
@@ -455,9 +478,27 @@ app.post('/like', (req, res) => {
   })
 })
 
+app.post('/dislike', (req, res) => {
+  const { project_id, account_id } = req.body;
+  let query = `insert into dislikes(project_id, account_id) values (${ project_id }, ${ account_id })`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
 app.post('/unlike', (req, res) => {
   const { account_id } = req.body;
   let query = `delete from likes where account_id = ${ account_id }`;
+  connection.query(query, (err, rows, fields) => {
+    if(err) throw err
+    res.send(rows);
+  })
+})
+
+app.post('/undislike', (req, res) => {
+  const { account_id } = req.body;
+  let query = `delete from dislikes where account_id = ${ account_id }`;
   connection.query(query, (err, rows, fields) => {
     if(err) throw err
     res.send(rows);
